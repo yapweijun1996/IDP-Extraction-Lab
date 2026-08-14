@@ -75,6 +75,17 @@ try {
       assert.deepEqual(await page.locator(".fields-pane .key-chip").allTextContents(), fieldKeysBefore, "Layout toggles must not change extraction fields");
       await resultToggle.click();
       await page.locator("#closeLayoutMenu").click();
+
+      const documentPaneBeforeResize = await page.locator(".document-pane").boundingBox();
+      const secondaryResizerBox = await page.locator('[data-resizer="secondary"]').boundingBox();
+      assert.ok(documentPaneBeforeResize && secondaryResizerBox, "Secondary pane resizer should be measurable");
+      await page.mouse.move(secondaryResizerBox.x + secondaryResizerBox.width / 2, secondaryResizerBox.y + secondaryResizerBox.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(secondaryResizerBox.x + secondaryResizerBox.width / 2 + 80, secondaryResizerBox.y + secondaryResizerBox.height / 2);
+      await page.mouse.up();
+      const documentPaneAfterResize = await page.locator(".document-pane").boundingBox();
+      assert.ok(documentPaneAfterResize && documentPaneAfterResize.width > documentPaneBeforeResize.width + 40, "Secondary pane resizer should follow mouse movement");
+      assert.notEqual(await page.locator('[data-resizer="secondary"]').getAttribute("aria-valuenow"), "44", "Secondary resizer should update its boundary value");
     }
     await page.locator("#providerButton").click();
     assert.equal(await page.getByRole("heading", { name: "BYOK Provider" }).isVisible(), true);

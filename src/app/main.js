@@ -999,13 +999,13 @@ import '../ui/g3tooltip.js';
     }
   }
 
-  function applyLayoutState({ persist = true } = {}) {
+  function applyLayoutState({ persist = true, configure = true } = {}) {
     if (persist) layoutState = saveLayoutState(layoutState);
     const visible = visiblePaneKeys(layoutState);
     const panes = { fields: document.querySelector('.fields-pane'), document: document.querySelector('.document-pane'), result: document.querySelector('.result-pane') };
     PANE_KEYS.forEach((key) => { if (panes[key]) panes[key].hidden = Boolean(layoutState.hidden[key]); });
     ensureValidActiveView();
-    configureResizers();
+    if (configure) configureResizers();
     const visibleWidthTotal = visible.reduce((sum, key) => sum + layoutState.widths[key], 0);
     const columns = [];
     [...els.workspace.children].forEach((child) => {
@@ -1020,23 +1020,24 @@ import '../ui/g3tooltip.js';
 
   function startPaneResize(event) {
     const resizer = event.currentTarget;
-    if (window.matchMedia('(max-width: 1199px)').matches || resizer.hidden) return;
+    if (paneResizeState || window.matchMedia('(max-width: 1199px)').matches || resizer.hidden) return;
     event.preventDefault();
-    paneResizeState = { resizer, startX: event.clientX, left: resizer.dataset.left, right: resizer.dataset.right, initial: layoutState };
+    paneResizeState = { resizer, pointerId: event.pointerId, startX: event.clientX, left: resizer.dataset.left, right: resizer.dataset.right, initial: layoutState };
     resizer.classList.add('dragging');
     resizer.setPointerCapture?.(event.pointerId);
   }
 
   function updatePaneResize(event) {
-    if (!paneResizeState) return;
-    const { resizer, startX, left, right } = paneResizeState;
-    layoutState = resizeBoundary(layoutState, left, right, event.clientX - startX, els.workspace.clientWidth, MIN_PANE_PX);
-    applyLayoutState({ persist: false });
+    if (!paneResizeState || paneResizeState.pointerId !== event.pointerId) return;
+    const { resizer, pointerId, startX, left, right, initial } = paneResizeState;
+    layoutState = resizeBoundary(initial, left, right, event.clientX - startX, els.workspace.clientWidth, MIN_PANE_PX);
+    applyLayoutState({ persist: false, configure: false });
+    resizer.setAttribute('aria-valuenow', String(boundaryValue(layoutState, left)));
     resizer.classList.add('dragging');
   }
 
-  function finishPaneResize() {
-    if (!paneResizeState) return;
+  function finishPaneResize(event) {
+    if (!paneResizeState || (event && paneResizeState.pointerId !== event.pointerId)) return;
     paneResizeState.resizer.classList.remove('dragging');
     layoutState = saveLayoutState(layoutState);
     paneResizeState = null;
@@ -1073,12 +1074,11 @@ import '../ui/g3tooltip.js';
   function installLayoutListeners(resizers) {
     resizers.forEach((resizer) => {
       resizer.addEventListener('pointerdown', startPaneResize);
-      resizer.addEventListener('pointermove', updatePaneResize);
-      resizer.addEventListener('pointerup', finishPaneResize);
-      resizer.addEventListener('pointercancel', finishPaneResize);
-      resizer.addEventListener('lostpointercapture', finishPaneResize);
       resizer.addEventListener('keydown', resizeFromKeyboard);
     });
+    document.addEventListener('pointermove', updatePaneResize);
+    document.addEventListener('pointerup', finishPaneResize);
+    document.addEventListener('pointercancel', finishPaneResize);
     els.layoutButton.addEventListener('click', () => {
       const open = !els.layoutMenu.hidden;
       els.layoutMenu.hidden = open;
