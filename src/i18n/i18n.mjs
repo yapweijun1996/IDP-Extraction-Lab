@@ -142,8 +142,52 @@ export function messagesFor(locale = 'en') {
 
 export function messageKeys() { return EN_KEYS.slice(); }
 
+const CP1252_TO_BYTE = Object.freeze({
+  0x80: 0x20AC, 0x81: 0, 0x82: 0x201A, 0x83: 0x0192, 0x84: 0x201E,
+  0x85: 0x2026, 0x86: 0x2020, 0x87: 0x2021, 0x88: 0x02C6, 0x89: 0x2030,
+  0x8A: 0x0160, 0x8B: 0x2039, 0x8C: 0x0152, 0x8D: 0, 0x8E: 0x017D,
+  0x8F: 0, 0x90: 0, 0x91: 0x2018, 0x92: 0x2019, 0x93: 0x201C, 0x94: 0x201D,
+  0x95: 0x2022, 0x96: 0x2013, 0x97: 0x2014, 0x98: 0x02DC, 0x99: 0x2122,
+  0x9A: 0x0161, 0x9B: 0x203A, 0x9C: 0x0153, 0x9D: 0, 0x9E: 0x017E,
+  0x9F: 0x0178
+});
+
+const CP1252_REVERSE = new Map(Object.entries(CP1252_TO_BYTE).map(([byte, code]) => [code, Number(byte)]));
+const utf8Decoder = new TextDecoder("utf-8");
+
+function decodeLegacyUtf8(value, fallbackToByte = (code) => code & 0xff) {
+  const bytes = new Uint8Array(value.length);
+  for (let i = 0; i < value.length; i += 1) {
+    const byte = fallbackToByte(value.charCodeAt(i));
+    if (byte == null || Number.isNaN(byte) || byte < 0 || byte > 255) return null;
+    bytes[i] = byte;
+  }
+  try {
+    const decoded = utf8Decoder.decode(bytes);
+    return decoded.includes("\uFFFD") ? null : decoded;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeLegacyEncoding(value) {
+  if (typeof value !== "string" || !/[\u00c0-\u00ff]/.test(value)) return value;
+
+  const latin1Decoded = decodeLegacyUtf8(value);
+  if (latin1Decoded) return latin1Decoded;
+
+  const cp1252Decoded = decodeLegacyUtf8(
+    value,
+    (code) => {
+      if (code <= 0xff) return code;
+      return CP1252_REVERSE.get(code) ?? 0xfffd;
+    }
+  );
+  return cp1252Decoded || value;
+}
+
 export function translate(key, variables = {}, locale = 'en') {
-  const value = messagesFor(locale)[key] ?? EN[key] ?? key;
+  const value = normalizeLegacyEncoding(messagesFor(locale)[key] ?? EN[key] ?? key);
   return String(value).replace(/\{([a-zA-Z0-9_]+)\}/g, (_match, name) => variables[name] == null ? `{${name}}` : String(variables[name]));
 }
 
