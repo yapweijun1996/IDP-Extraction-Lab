@@ -1,0 +1,27 @@
+{
+  "name": "idp-extraction-lab-pwa",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test tests/*.test.mjs",
+    "qa:browser": "node scripts/qa-browser.mjs",
+    "qa:pwa-update": "node scripts/qa-pwa-update.mjs",
+    "scan:dist": "node scripts/scan-dist.mjs",
+    "verify:standalone": "node scripts/verify-standalone.mjs",
+    "check": "npm run verify:standalone && npm test && npm run build && npm run scan:dist"
+  },
+  "dependencies": {
+    "pdfjs-dist": "6.2.108"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "6.2.5",
+    "playwright-core": "1.62.1",
+    "sharp": "0.35.3",
+    "vite": "8.2.1",
+    "vite-plugin-pwa": "1.3.0"
+  }
+}
