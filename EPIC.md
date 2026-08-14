@@ -1,82 +1,85 @@
 ﻿# EPIC.md
 
-## EPIC-01：源码结构治理（已完成）
+## EPIC-01: Source structure refactor
 
-目标：将平铺 `src` 拆分为职责分层目录，减少耦合与维护成本。
+**Status:** Completed
 
-状态：✅ 已完成
+Objective: Split the previous flat `src/` layout into domain layers and reduce coupling for easier maintenance.
 
-完成项：
-- 建立 `src/app`, `src/runtime`, `src/providers`, `src/validation`, `src/state`, `src/ui`, `src/i18n`, `src/contracts`。
-- 将主入口切到 `src/app/main.js`。
-- 同步 `import`、测试引用、Vite 资产映射。
+Completed:
+- Introduced `src/app`, `src/runtime`, `src/providers`, `src/validation`, `src/state`, `src/ui`, `src/i18n`, `src/contracts`.
+- Moved entrypoint to `src/app/main.js`.
+- Updated imports and runtime references.
 
-验收标准：
-- 构建通过且行为未引入新语义变更。
-- `src` 结构清晰且可按层查找。
+Acceptance:
+- Build runs successfully.
+- No intentional behavior changes.
+- Directory ownership and responsibilities are clear by domain.
 
-## EPIC-02：提取运行时与文档完整性（进行中）
+## EPIC-02: Runtime and extraction integrity
 
-目标：保持提取主链路在重构后稳定，保留证据与 fail-closed 行为。
+**Status:** In progress
 
-状态：⚠️ 进行中（可运行链路已保持）
+Objective: Keep extraction chain stable after refactor, including fail-closed mapping and evidence rules.
 
-完成项：
-- `runtime/`, `providers/`, `validation/` 分层并保持契约约束。
-- 证据失效与缺失情形继续走可追溯失败路径。
-- 本地化、布局、缩略图与渲染能力保留。
+Completed:
+- Preserved runtime, provider, and validation layering.
+- Kept evidence-based behavior for highlights and mapping failures.
+- Preserved localization/layout/thumbnail/render capabilities.
 
-待补齐：
-- 与新目录下文档对齐的最终用户行为文档（本次补齐已推进）。
+In progress:
+- Documentation harmonization with current runtime behavior.
 
-验收标准：
-- `npm run check` 相关链路在支持 BYOK 的真实环境下可复现。
-- 关键异常行为（mapping fail / inspect stop / needs_review）保持不变。
+Acceptance:
+- `npm run check` remains reproducible under supported BYOK runs.
+- Core fail-closed behaviors (`mapping fail`, `inspect stop`, `needs_review`) remain unchanged.
 
-## EPIC-03：离线、PWA 与验证自动化（进行中）
+## EPIC-03: Offline, PWA, and verification automation
 
-目标：保证离线行为可验证、PWA 更新有提示性流程。
+**Status:** In progress
 
-状态：⚠️ 进行中
+Objective: Keep offline and update behavior deterministic and verifiable.
 
-完成项：
-- Vite PWA 插件接入与显式更新策略。
-- `NetworkOnly` 保障 Provider 请求不缓存。
-- `qa:pwa-update` 与 `qa:browser` 脚本存在且用于验收。
+Completed:
+- PWA plugin integrated with explicit update registration.
+- Provider requests configured as `NetworkOnly`.
+- Browser and PWA-update QA scripts exist and are runnable.
 
-风险：
-- 发布验证命令 `verify:standalone` 依赖 `.github/workflows/pages.yml`，当前仓库中未纳入该文件。
+Risk:
+- `verify:standalone` requires `.github/workflows/pages.yml`; this repository currently lacks the file.
 
-## EPIC-04：仓库治理与安全边界（进行中）
+Acceptance:
+- Offline/online behavior tests pass for shell usability, provider non-caching, and update lifecycle.
 
-目标：降低运行时噪音、明确可清理项。
+## EPIC-04: Repository hygiene and security boundaries
 
-状态：⚠️ 进行中
+**Status:** In progress
 
-完成项：
-- 新增 `.gitignore`。
-- 新增 `docs/cleanup-plan.md` 并列出无用文件候选。
-- `THIRD_PARTY_NOTICES.md` 与示例样本哈希保留。
+Objective: Clarify cleanup candidates and guardrails while keeping a clean repository state.
 
-待办：
-- 将临时日志/截图进入正式确认流程后再清理。
+Completed:
+- Added `.gitignore` and documented cleanup candidates in `docs/cleanup-plan.md`.
+- Preserved third-party notices and synthetic sample metadata.
 
-验收标准：
-- `git status` 不受构建缓存和临时文件污染。
-- 每次清理动作都有验证闭环（test/build/scan）。
+In progress:
+- Final decision process for deletions after dependency verification.
 
-## EPIC-05：文档体系（进行中）
+Acceptance:
+- Repository status is stable in normal development workflows.
+- Cleanup actions only happen after test/build/scan verification.
 
-目标：以分层文档统一记录架构、需求、路线图与任务。
+## EPIC-05: Documentation consistency
 
-状态：✅ 已开始
+**Status:** In progress
 
-完成项：
-- 更新 `README.md`。
-- 新建 `DESIGN.md`, `SPEC.md`, `EPIC.md`。
+Objective: Keep architecture, requirements, roadmap, and tasks aligned and readable.
 
-进行中：
-- 已同步 `ROADMAP.md`, `TASK.md`。
+Completed:
+- Refined `README.md`.
+- Added `DESIGN.md`, `SPEC.md`, `EPIC.md`, `ROADMAP.md`, `TASK.md`.
 
-验收标准：
-- 文档术语一致、状态一致、可直接用于交接。
+In progress:
+- Keep all project markdown files consistently in English and synchronized with code state.
+
+Acceptance:
+- Same terminology and status appears across all planning documents.

@@ -1,85 +1,85 @@
 ﻿# TASK.md
 
-## 任务总览
+## Task overview
 
-- 更新状态：2026-08-14
-- 说明：以下任务以当前仓库源码为主信息源，目标是让结构治理、架构决策与交付状态保持一致。
+- Last updated: 2026-08-14
+- Purpose: Keep structure refactor, architecture, and delivery status synchronized with source truth.
 
-## 完成任务
+## Completed tasks
 
-### T-001 源码重构
-- 目标：完成目录重构与路径同步
-- 状态：已完成
-- 验收：`src` 已分为 8 个功能目录，旧路径引用已迁移
+### T-001 Source refactor
+- Goal: Complete directory split and path migration.
+- Status: Completed
+- Acceptance: `src` is fully organized by functional layer and old imports are migrated.
 
-### T-002 主入口与 Vite 资产对齐
-- 目标：更新 `index.html` 与 `vite.config.mjs` 资源映射
-- 状态：已完成
-- 验收：`isolatedAssets` 与 `generateBundle` 使用新路径，运行时资产仍输出兼容文件名
+### T-002 Entrypoint and Vite asset alignment
+- Goal: Align `index.html` and Vite asset mapping.
+- Status: Completed
+- Acceptance: `isolatedAssets` and `generateBundle` use layer paths while preserving runtime compatibility output names.
 
-### T-003 测试与引用更新
-- 目标：修订所有测试中的路径引用
-- 状态：已完成
-- 验收：`tests/*` 使用 `src/*` 新路径（含 runtime、provider、i18n、ui、validation、state）
+### T-003 Test reference migration
+- Goal: Update all test references to new module paths.
+- Status: Completed
+- Acceptance: Runtime/provider/i18n/ui/validation/state tests reference `src/*` locations.
 
-### T-004 .gitignore 与构建/临时文件治理
-- 目标：避免提交 node_modules、dist、临时日志
-- 状态：已完成
-- 结果：新增 `.gitignore`
+### T-004 .gitignore and artifact hygiene
+- Goal: Ignore build and local temporary artifacts.
+- Status: Completed
+- Acceptance: `.gitignore` includes `node_modules`, `dist`, logs, temporary files.
 
-### T-005 文档化第一轮
-- 目标：更新 README 与清理计划
-- 状态：已完成
-- 结果：`README.md` 重写，`docs/cleanup-plan.md` 建立
+### T-005 First documentation pass
+- Goal: Refresh README and add cleanup documentation.
+- Status: Completed
+- Acceptance: README rewritten; `docs/cleanup-plan.md` created.
 
-### T-006 文档套件新增
-- 目标：补齐 DESIGN/SPEC/EPIC 文档
-- 状态：已完成
-- 结果：`DESIGN.md`, `SPEC.md`, `EPIC.md` 已创建
+### T-006 Planning docs creation
+- Goal: Add DESIGN/SPEC/EPIC/ROADMAP/TASK documentation.
+- Status: Completed
+- Acceptance: Core planning documents added and aligned.
 
-## 进行中任务
+## In-progress tasks
 
-### T-007 发布链路对齐（阻塞）
-- 目标：`verify:standalone` 所需的发布链路文件齐全
-- 状态：进行中（阻塞）
-- 依赖：`.github/workflows/pages.yml`（当前仓库缺失）
-- 备注：`verify-standalone.mjs` 当前要求检查该文件和其核心字段
+### T-007 Deployment chain alignment (blocker)
+- Goal: Complete prerequisites for `verify:standalone`.
+- Status: In progress (blocked)
+- Dependency: `.github/workflows/pages.yml` missing in this repository.
+- Notes: `scripts/verify-standalone.mjs` checks this file and key workflow strings.
 
-### T-008 文档闭环（ROADMAP/TASK）
-- 目标：同步 `ROADMAP.md` 与 `TASK.md`
-- 状态：进行中
-- 依赖：部署链和清理决策确认
+### T-008 Documentation sync (roadmap/task)
+- Goal: Keep documentation wording and status aligned across planning artifacts.
+- Status: In progress
+- Dependency: completion of deployment alignment and cleanup decisions.
 
-### T-009 发布前清理确认
-- 目标：对 `docs/cleanup-plan.md` 中候选文件执行删前决策
-- 状态：进行中
-- 依赖：确认临时文件不再需要用于调试/截图/外部脚本
+### T-009 Pre-cleanup confirmation
+- Goal: Review `docs/cleanup-plan.md` candidates before deletion.
+- Status: In progress
+- Dependency: confirm no debugging or external references depend on those files.
 
-## 待办任务
+## Pending tasks
 
-### T-010 结构边界评审
-- 目标：确认 `i18n.mjs` 与 `localization.js` 的职责分界
-- 状态：待办
-- 产物：边界决策说明（如合并或保留）
+### T-010 Module boundary review
+- Goal: Decide whether to merge `i18n.mjs` and `localization.js`.
+- Status: Pending
+- Deliverable: Boundary decision and rationale.
 
-### T-011 验证链路证据归档
-- 目标：固定 `npm test`、`npm run build`、`npm run scan:dist`、`npm run qa:*` 最近一次结果
-- 状态：待办
-- 产物：带时间戳的可追溯验证日志说明（非敏感）
+### T-011 Verification evidence capture
+- Goal: Capture and archive current validation results (`npm test`, `npm run build`, `npm run scan:dist`, `npm run qa:*`).
+- Status: Pending
+- Deliverable: Timestamped verification log (non-sensitive).
 
-### T-012 任务优先级与负责人落表
-- 目标：新增责任人/优先级/预估工作量字段（如需要）
-- 状态：待办
+### T-012 Task ownership and planning metadata
+- Goal: Add owner / priority / estimate fields if required by team workflow.
+- Status: Pending
 
-## Blockers（阻塞项）
+## Blockers
 
-1. `.github/workflows/pages.yml` 缺失导致 `verify:standalone` 脚本检查不满足。
-2. 文件删除动作（`tmp-*`, `vite-*log`）需先确认无外部依赖。
-3. 清理 `dist/` 与 `node_modules` 之外的历史遗留文件前需对比 release/QA 流程。
+1. Missing `.github/workflows/pages.yml` blocks strict pass for `verify:standalone`.
+2. Cleanup deletions require dependency confirmation.
+3. Any cleanup involving files outside `.gitignore` must be validated with test/build/scan.
 
-## 下一步（建议顺序）
+## Recommended next steps
 
-1. 先补齐 `.github/workflows/pages.yml` 并完成一次 `npm run check` + `npm run qa:pwa-update`。
-2. 形成发布验证快照（输出成功命令清单与时间）。
-3. 依据清理门控删除已确认的临时文件。
-4. 重新同步 `README` 与本文件中的状态字段。
+1. Address the deployment blocker by adding the workflow file or adjusting verification constraints.
+2. Run a full verification sweep and record results.
+3. Execute cleanup gate for confirmed temporary files.
+4. Keep this task board synchronized with README and planning docs after each state change.

@@ -1,113 +1,113 @@
 ﻿# DESIGN.md
 
-## 设计目标
+## Design goals
 
-IDP Extraction Lab 采用前端优先、离线优先的静态单页架构，核心目标为：
+IDP Extraction Lab is a static, browser-first PWA with an offline-first workflow. The main goal is to reduce maintenance friction while preserving existing extraction behavior.
 
-- 在浏览器本地执行文档提取流程。
-- 提供 BYOK（Bring Your Own Key）模型调用路径。
-- 在不改动核心业务语义的前提下，降低代码管理成本。
-- 支持可复制的本地验收与可复现构建。
+- Run document extraction locally in the browser.
+- Provide BYOK (Bring Your Own Key) provider calls.
+- Keep the codebase behavior-compatible during refactoring.
+- Keep the project reproducible through local-only scripts and deterministic builds.
 
-## 总体架构
+## High-level architecture
 
 ```text
-UI (index.html + idp-lab.css + src/app/main.js)
-  -> 应用状态与事件编排（字段、文档、结果、布局、语言、Provider）
+index.html + idp-lab.css + src/app/main.js
+  -> application orchestration (fields, document, result, layout, locale, providers)
 
-PDF 文档
-  -> PDF 渲染/缩略图（src/ui/*）
+PDF documents
+  -> PDF rendering + thumbnails (src/ui/*)
 
-提取契约 + 提示词（src/contracts/*）
-  -> runtime worker（src/runtime/runtime-worker.js）
+Extraction contract + prompts (src/contracts/*)
+  -> runtime-worker (src/runtime/runtime-worker.js)
 
-Provider 适配（src/providers/*）
+Provider adapters (src/providers/*)
   -> Gemini / OpenAI
 
-校验与结构化映射（src/validation/*）
-  -> 结果与证据
+Validation and structured mapping (src/validation/*)
+  -> verified result + evidence
 
-持久化与运行记录（src/state/*）
-  -> IndexedDB（vault / runs / documents / traces / provider credentials）
+State and persistence (src/state/*)
+  -> IndexedDB (vault / runs / documents / traces / provider credentials)
 
-服务工作线程与离线能力（vite-plugin-pwa + src/runtime/telemetry.mjs）
-  -> 离线壳、显式更新提示与网络-only Provider POST
+PWA service worker + offline support (vite-plugin-pwa + src/runtime/telemetry.mjs)
+  -> shell caching + explicit update + network-only provider POST
 ```
 
-## 源码分层（按目录）
+## Source-layer layout
 
 - `src/app/`
-  - 应用入口与主流程编排。
-  - 已包含：`main.js`
+  - Application entry and orchestration.
+  - Contains: `main.js`
 - `src/runtime/`
-  - Worker 客户端桥接、Worker 本体、遥测。
-  - 已包含：`runtime-client.mjs`, `runtime-worker.js`, `telemetry.mjs`
+  - Worker bridge, runtime worker, and telemetry.
+  - Contains: `runtime-client.mjs`, `runtime-worker.js`, `telemetry.mjs`
 - `src/providers/`
-  - Provider 配置、模型交互与归一化。
-  - 已包含：`contract.mjs`, `provider-client.js`, `provider-page-normalizer.js`
+  - Provider configuration, request/response integration, and normalization.
+  - Contains: `contract.mjs`, `provider-client.js`, `provider-page-normalizer.js`
 - `src/validation/`
-  - 响应校验、结构化 JSON 处理。
-  - 已包含：`validation-core.js`, `validator.mjs`, `structured-json.js`
+  - Structured response checks and mapping.
+  - Contains: `validation-core.js`, `validator.mjs`, `structured-json.js`
 - `src/state/`
-  - 本地状态、布局、密钥与结果持久化。
-  - 已包含：`layout-state.mjs`, `vault.mjs`
+  - Local state and secure persistence.
+  - Contains: `layout-state.mjs`, `vault.mjs`
 - `src/ui/`
-  - UI 渲染、图标、缩略图、文本高亮。
-  - 已包含：`pdf-renderer.mjs`, `thumbnail-queue.mjs`, `highlight-bbox.mjs`, `icons.mjs`, `g3tooltip.js`
+  - Rendering, icons, thumbnail queue, and highlight components.
+  - Contains: `pdf-renderer.mjs`, `thumbnail-queue.mjs`, `highlight-bbox.mjs`, `icons.mjs`, `g3tooltip.js`
 - `src/i18n/`
-  - 本地化词条与语言切换。
-  - 已包含：`i18n.mjs`, `localization.js`
+  - UI localization and locale helpers.
+  - Contains: `i18n.mjs`, `localization.js`
 - `src/contracts/`
-  - Prompt 与 worker/action 契约。
-  - 已包含：`extraction-prompt.js`, `inspection-action-config.js`
+  - Prompt and inspection-action contracts.
+  - Contains: `extraction-prompt.js`, `inspection-action-config.js`
 
-## 关键模块与职责边界
+## Responsibility boundaries
 
 - `src/app/main.js`
-  - 负责：字段模型、文档加载、提取发起、页面交互、结果渲染、异常展示。
-  - 不直接承担协议耦合逻辑（映射/校验/Provider 交互均委派至对应层）。
+  - UI model definition, document loading, extraction start, result rendering, and error display.
+  - Delegates protocol-specific logic to runtime/provider/validation modules.
 
 - `src/runtime/`
-  - `runtime-client.mjs`：启动/通信 Worker。
-  - `runtime-worker.js`：执行提取运行时。
-  - `telemetry.mjs`：安全 trace 与埋点脱敏。
+  - `runtime-client.mjs`: worker lifecycle and messaging.
+  - `runtime-worker.js`: extraction orchestration.
+  - `telemetry.mjs`: trace and privacy-safe telemetry.
 
 - `src/providers/`
-  - 承担 Provider 的输入输出标准化。
-  - 责任边界：Provider 响应必须通过验证与 allowlist 映射。
+  - Owns provider request contracts and normalization.
+  - Validation must pass allowlisted mapping before values enter the result model.
 
 - `src/validation/`
-  - 负责：结构化 JSON 兼容层、字段映射校验、错误分类。
-  - 责任边界：失败返回为 `null/needs_review` 而非静默猜测。
+  - Owns structured schema compatibility, field mapping, and mapping failures.
+  - Failures resolve to `null`/`needs_review` instead of synthetic inference.
 
 - `src/state/`
-  - 负责：`localStorage` 布局持久化、IndexedDB Vault 与加密存储。
-  - 责任边界：存储对象为状态与运行信息，不包含明文 Provider 密钥。
+  - Owns layout persistence, vault crypto key handling, and run/document artifacts.
+  - Explicitly avoids storing plaintext keys in local state.
 
-## 数据流与失败行为
+## Data flow and failure behavior
 
-- 成功路径：
-  1. 用户定义字段与契约。
-  2. Worker 使用契约与 prompt 发起提取。
-  3. Provider 结果经过验证与映射。
-  4. 生成带证据的结果对象。
-  5. 渲染到 UI，并持久化运行记录。
+- Success path
+  1. User defines fields and extraction contract.
+  2. Runtime worker builds prompt context and invokes provider.
+  3. Provider response is validated and mapped.
+  4. Evidence-aware result object is produced.
+  5. UI renders results and persists run data locally.
 
-- 失败与降级路径：
-  - 任何阶段映射/校验失败都按 fail-closed 处理。
-  - 缺失或冲突证据不造假高亮，不覆盖已存在的可信字段。
-  - 失败信息可在 Issues Drawer 与 Trace 面板查看。
+- Failure path
+  - Mapping/validation failures are treated as closed-fail.
+  - Missing or conflicting evidence never generates fake highlights.
+  - Issues and traces are exposed in the issues drawer and trace panel.
 
-## 安全与边界设计
+## Security and boundary design
 
-- BYOK 实现与本地加密，不引入后端密钥托管。
-- Provider POST 使用 `NetworkOnly` 缓存策略，不写入 Cache API。
-- PWA 更新采用 `registerType: "prompt"`，用户确认后才激活。
-- `.github/workflows/pages.yml` 作为独立部署校验源目前在源码目录缺失，属于当前架构发布链的阻塞项。
+- BYOK is local by design and does not introduce backend secret management.
+- Provider endpoints are fixed to official Gemini/OpenAI domains.
+- Provider POST requests are `NetworkOnly`, not stored in the runtime cache.
+- PWA updates use `registerType: "prompt"`; user confirmation is required before activation.
+- `.github/workflows/pages.yml` is still required by verification and currently missing in this repository, so it is a deploy chain blocker.
 
-## 关键技术决策
+## Architectural decisions
 
-- 保持 `.js` 与 `.mjs` 混合扩展名，避免一次性大规模 import 重写。
-- 使用分层目录替代平铺结构，降低职责耦合风险。
-- 静态资源构建策略：通过 Vite 插件将关键 runtime/样本/assets 映射到固定产物名，兼容 Worker/脚本旧式路径依赖。
-- 不新增别名系统（如 `@/`）以减少一次性重构范围。
+- Keep mixed `.js` / `.mjs` extension pattern to avoid large import churn.
+- Keep a directory-based layered layout rather than adding import aliases.
+- Keep worker and runtime asset output names stable to maintain existing runtime path expectations.
