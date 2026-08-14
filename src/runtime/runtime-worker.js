@@ -343,9 +343,9 @@ function decisionPrompt(pageNumber, targets, page, contract) {
 function locatorPrompt(page, targets, contract) {
   return [
     "Locate only the listed evidence targets on this single page.",
-    "Return JSON {regions:[{target_id,box_2d}]} with tight box_2d=[ymin,xmin,ymax,xmax] integers in 0..1000.",
-    "For a row target, box the complete printed row and use the printed S/N and Stock Code as anchors.",
-    "For a field target, box only the label/value evidence. Never return a whole-table or whole-page box.",
+    "Return JSON {regions:[{target_id,box_2d}]} with tight box_2d=[ymin,xmin,ymax,xmax] integers in 0..1000, calibrated to the visible text pixels in this page image.",
+    "For a row target, box the complete printed row from its first visible text to its last visible text, use the printed S/N and Stock Code as anchors, and exclude adjacent rows.",
+    "For a field target, box the visible label and value evidence together, including wrapped value lines when present, with only minimal whitespace. Never return only the label, only a nearby value, a whole-table, or a whole-page box.",
     "Return an empty regions array when the source cannot be located. Do not invent a region.",
     `Targets: ${JSON.stringify(targets.map((target) => targetDescriptor(target, page, contract)))}`
   ].join("\n");
