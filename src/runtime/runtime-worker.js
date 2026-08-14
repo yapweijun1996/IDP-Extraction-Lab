@@ -844,7 +844,7 @@ async function executeRun(payload) {
   };
   const attempts = new Map();
   activeRun = run;
-  if (!run.apiKey) throw new Error("Provider key is not configured");
+  if (run.config.provider !== "xorgateway" && !run.apiKey) throw new Error("Provider key is not configured");
   emit(run, "preparing", "runtime", "complete", { message: `Browser worker initialized for ${run.config.provider}` });
 
   for (let pageNumber = 1; pageNumber <= run.pageCount; pageNumber += 1) {

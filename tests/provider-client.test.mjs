@@ -12,6 +12,7 @@ async function loadClient() {
     String,
     Error,
     AbortController,
+    atob,
     setTimeout,
     clearTimeout
   });
@@ -82,6 +83,30 @@ test("OpenAI strict JSON request uses Responses API text.format without token or
   assert.equal("temperature" in captured.body, false);
   assert.equal("max_output_tokens" in captured.body, false);
   assert.deepEqual(JSON.parse(JSON.stringify(result.usage)), { inputTokens: 7, outputTokens: 2, totalTokens: 9 });
+});
+
+test("XOR Gateway uses the embedded credential when no caller API key is supplied", async () => {
+  const client = await loadClient();
+  let captured;
+  const result = await client.request({
+    config: { provider: "xorgateway", model: "gateway-test", reasoning: "medium" },
+    apiKey: null,
+    prompt: "Return JSON",
+    schema: { type: "object", required: ["ok"], properties: { ok: { type: "boolean" } } }
+  }, async (url, init) => {
+    captured = { url, init, body: JSON.parse(init.body) };
+    return jsonResponse({
+      status: "completed",
+      output: [{ content: [{ type: "output_text", text: "{\"ok\":true}" }] }],
+      usage: { input_tokens: 7, output_tokens: 2, total_tokens: 9 }
+    });
+  });
+
+  assert.equal(captured.url, "https://gpt.yapweijun1996.com/v1/responses");
+  assert.match(captured.init.headers.authorization, /^Bearer\s+\S+$/);
+  assert.equal(captured.body.model, "gateway-test");
+  assert.equal(captured.body.text.format.type, "json_schema");
+  assert.equal(result.text, "{\"ok\":true}");
 });
 
 test("Provider client rejects non-base64 visual evidence before network", async () => {

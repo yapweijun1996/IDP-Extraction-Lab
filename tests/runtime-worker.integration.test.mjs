@@ -52,9 +52,26 @@ function fakeProvider(prompt) {
   return value;
 }
 
-async function fakeFetch(url, init) {
-  assert.match(String(url), /^https:\/\/generativelanguage\.googleapis\.com\/v1beta\/models\//);
+async function fakeFetch(url, init, requests = null) {
+  const requestUrl = String(url);
   const body = JSON.parse(init.body);
+  requests?.push({ url: requestUrl, authorization: init.headers?.authorization || "" });
+  if (requestUrl === "https://gpt.yapweijun1996.com/v1/responses") {
+    assert.match(init.headers.authorization, /^Bearer\s+\S+$/);
+    const prompt = body.input?.flatMap((item) => item.content || []).find((part) => typeof part.text === "string")?.text || "";
+    return {
+      ok: true,
+      status: 200,
+      async json() {
+        return {
+          status: "completed",
+          output: [{ content: [{ type: "output_text", text: JSON.stringify(fakeProvider(prompt)) }] }],
+          usage: { input_tokens: 10, output_tokens: 5, total_tokens: 15 }
+        };
+      }
+    };
+  }
+  assert.match(requestUrl, /^https:\/\/generativelanguage\.googleapis\.com\/v1beta\/models\//);
   const prompt = body.contents[0].parts.find((part) => typeof part.text === "string")?.text || "";
   return {
     ok: true,
@@ -70,6 +87,7 @@ async function fakeFetch(url, init) {
 
 async function createWorkerHarness() {
   const messages = [];
+  const providerRequests = [];
   let resolveResult;
   const completed = new Promise((resolve) => { resolveResult = resolve; });
   const context = vm.createContext({
@@ -90,11 +108,12 @@ async function createWorkerHarness() {
     Error,
     TypeError,
     structuredClone,
+    atob,
     setTimeout,
     clearTimeout,
     queueMicrotask,
     AbortController,
-    fetch: fakeFetch,
+    fetch: (url, init) => fakeFetch(url, init, providerRequests),
     importScripts: () => {},
     Agrun: {
       defineAction: (spec) => spec,
@@ -127,12 +146,11 @@ async function createWorkerHarness() {
   };
   for (const name of scripts) vm.runInContext(await fs.readFile(new URL(name, root), "utf8"), context, { filename: name });
   vm.runInContext(await fs.readFile(new URL("runtime/runtime-worker.js", root), "utf8"), context, { filename: "runtime-worker.js" });
-  return { context, messages, completed };
+  return { context, messages, completed, providerRequests };
 }
 
-test("Worker state machine localizes mandatory evidence, rereads crops, and completes deterministically", async () => {
-  const { context, messages, completed } = await createWorkerHarness();
-  const contract = {
+function testContract() {
+  return {
     schemaVersion: "idp_extraction_contract_v1",
     documentType: "purchase_order",
     advancedPrompt: "",
@@ -144,6 +162,11 @@ test("Worker state machine localizes mandatory evidence, rereads crops, and comp
     ],
     totalFields: [{ key: "grand_total", label: "Grand Total", type: "number", required: true }]
   };
+}
+
+test("Worker state machine localizes mandatory evidence, rereads crops, and completes deterministically", async () => {
+  const { context, messages, completed } = await createWorkerHarness();
+  const contract = testContract();
   await context.self.onmessage({ data: {
     type: "run",
     requestId: "test-request",
@@ -171,4 +194,42 @@ test("Worker state machine localizes mandatory evidence, rereads crops, and comp
   assert.ok(events.some((event) => event.step === "targeted_reread" && event.status === "complete"));
   assert.ok(events.some((event) => event.step === "provenance_commit" && event.status === "complete"));
   assert.deepEqual(events.map((event) => event.seq), events.map((_, index) => index + 1));
+});
+
+test("Worker accepts the embedded XOR Gateway credential when apiKey is null", async () => {
+  const { context, messages, completed, providerRequests } = await createWorkerHarness();
+  await context.self.onmessage({ data: {
+    type: "run",
+    requestId: "gateway-request",
+    runId: "gateway-run",
+    fileName: "synthetic.pdf",
+    documentHash: "hash",
+    pageCount: 1,
+    contract: testContract(),
+    config: { provider: "xorgateway", model: "gateway-test", reasoning: "medium" },
+    apiKey: null
+  } });
+  const message = await completed;
+  assert.equal(message.error, undefined);
+  assert.equal(message.result.status, "completed");
+  assert.ok(providerRequests.some(({ url, authorization }) => url === "https://gpt.yapweijun1996.com/v1/responses" && /^Bearer\s+\S+$/.test(authorization)));
+  assert.ok(messages.some((entry) => entry.type === "event" && entry.event.step === "runtime" && entry.event.status === "complete"));
+});
+
+test("Worker still rejects a missing user key for non-embedded providers", async () => {
+  const { context, completed, providerRequests } = await createWorkerHarness();
+  await context.self.onmessage({ data: {
+    type: "run",
+    requestId: "missing-key-request",
+    runId: "missing-key-run",
+    fileName: "synthetic.pdf",
+    documentHash: "hash",
+    pageCount: 1,
+    contract: testContract(),
+    config: { provider: "gemini", model: "test-model", reasoning: "medium" },
+    apiKey: null
+  } });
+  const message = await completed;
+  assert.equal(message.error, "Provider key is not configured");
+  assert.equal(providerRequests.length, 0);
 });

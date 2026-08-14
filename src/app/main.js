@@ -113,7 +113,7 @@ import '../ui/g3tooltip.js';
     runButton: $('runButton'), emptyRunButton: $('emptyRunButton'), exportButton: $('exportButton'), fileStatus: $('fileStatus'), rowCount: $('rowCount'), fileName: $('fileName'), pageCountMeta: $('pageCountMeta'), documentInput: $('documentInput'), selectDocumentButton: $('selectDocumentButton'),
     emptyState: $('emptyState'), errorState: $('errorState'), errorMessage: $('errorMessage'), errorStep: $('errorStep'), retryRunButton: $('retryRunButton'), viewFailureTrace: $('viewFailureTrace'), processingState: $('processingState'), completedResult: $('completedResult'), processingTitle: $('processingTitle'), progressText: $('progressText'), processingDetail: $('processingDetail'), progressBar: $('progressBar'), compactSummary: $('compactSummary'),
     documentFields: $('documentFields'), documentStatusMark: $('documentStatusMark'), lineItemHeaders: $('lineItemHeaders'), lineItemRows: $('lineItemRows'), mobileLineItems: $('mobileLineItems'), rowSearch: $('rowSearch'), paginationSummary: $('paginationSummary'), linePage: $('linePage'), lineItemCount: $('lineItemCount'), totalsList: $('totalsList'), financialCheck: $('financialCheck'), financialExpression: $('financialExpression'), financialStatus: $('financialStatus'),
-    pageImage: $('pageImage'), pageIndicator: $('pageIndicator'), thumbnailRail: $('thumbnailRail'), pageFrame: $('pageFrame'), documentHighlight: $('documentHighlight'), documentStage: $('documentStage'),
+    pageImage: $('pageImage'), pageIndicator: $('pageIndicator'), thumbnailRail: $('thumbnailRail'), pageFrame: $('pageFrame'), documentHighlight: $('documentHighlight'), documentStage: $('documentStage'), viewerBody: $('viewerBody'),
     fieldDialog: $('fieldDialog'), dialog: document.querySelector('#fieldDialog .dialog'), dialogTitle: $('dialogTitle'), suggestedMode: $('suggestedMode'), customMode: $('customMode'), fieldSearch: $('fieldSearch'), suggestedFields: $('suggestedFields'),
     customLabel: $('customLabel'), customKey: $('customKey'), customType: $('customType'), customRequired: $('customRequired'), labelError: $('labelError'), keyError: $('keyError'),
     issuesDrawer: $('issuesDrawer'), issuesPanel: document.querySelector('#issuesDrawer .issues-drawer'), issueList: $('issueList'), traceList: $('traceList'), evaluationSummary: $('evaluationSummary'), downloadTrace: $('downloadTrace'), issuesButton: $('issuesButton'), elapsedSummary: $('elapsedSummary'), pagesSummary: $('pagesSummary'), toast: $('toast'),
@@ -1184,7 +1184,7 @@ import '../ui/g3tooltip.js';
     $('zoomOut').addEventListener('click', () => setZoom(zoom - 25));
     $('zoomIn').addEventListener('click', () => setZoom(zoom + 25));
     $('fitButton').addEventListener('click', () => { zoom = 100; $('zoomLabel').textContent = 'Fit'; els.pageFrame.classList.add('fit'); els.pageFrame.style.setProperty('--page-scale', '1'); });
-    $('fullscreenButton').addEventListener('click', () => els.viewerBody.requestFullscreen?.());
+    $('fullscreenButton').addEventListener('click', () => els.viewerBody?.requestFullscreen?.());
     els.thumbnailRail.addEventListener('click', (event) => { const button = event.target.closest('[data-page]'); if (button) setDocumentPage(button.dataset.page); });
 
     els.rowSearch.addEventListener('input', () => { currentLinePage = 1; renderLineItems(); });

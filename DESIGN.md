@@ -22,7 +22,7 @@ Extraction contract + prompts (src/contracts/*)
   -> runtime-worker (src/runtime/runtime-worker.js)
 
 Provider adapters (src/providers/*)
-  -> Gemini / OpenAI
+  -> XOR Gateway / Gemini / OpenAI
 
 Validation and structured mapping (src/validation/*)
   -> verified result + evidence
@@ -101,7 +101,9 @@ PWA service worker + offline support (vite-plugin-pwa + src/runtime/telemetry.mj
 ## Security and boundary design
 
 - BYOK is local by design and does not introduce backend secret management.
-- Provider endpoints are fixed to official Gemini/OpenAI domains.
+- Gemini and OpenAI credentials are user-supplied and stored through the encrypted local vault.
+- XOR Gateway uses an embedded XOR-obfuscated demo credential and does not require a user key; this is not production-grade secret storage.
+- Provider endpoints are fixed to the allowlisted Gemini, OpenAI, and XOR Gateway domains.
 - Provider POST requests are `NetworkOnly`, not stored in the runtime cache.
 - PWA updates use `registerType: "prompt"`; user confirmation is required before activation.
 - `.github/workflows/pages.yml` is still required by verification and currently missing in this repository, so it is a deploy chain blocker.

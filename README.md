@@ -109,7 +109,7 @@ npm ci
 npm run dev
 ```
 
-Open the local Vite URL and configure a test BYOK key (Gemini or OpenAI). Then use:
+Open the local Vite URL. XOR Gateway is the default provider and uses its embedded demo credential, so it does not require a user API key. Gemini and OpenAI require a locally encrypted BYOK key. Then use:
 
 - `Test connection`
 - `Run Extraction`

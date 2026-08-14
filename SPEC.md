@@ -35,7 +35,9 @@
 - Field editing supports add/remove/reorder/customize operations.
 
 ### FR-004 Provider integration
-- Support Gemini and OpenAI provider selection.
+- Support XOR Gateway, Gemini, and OpenAI provider selection.
+- XOR Gateway is the default provider and uses an embedded demo credential without requiring a user API key.
+- Gemini and OpenAI require provider keys supplied by the user and stored encrypted locally.
 - Support provider test and delete flows.
 - Store BYOK keys encrypted locally; never persist plaintext keys in application state.
 
@@ -59,7 +61,8 @@
 - `qa:browser` and `qa:pwa-update` provide interactive and PWA update behavior checks.
 
 ### NFR-003 Security
-- Provider endpoints are limited to official provider domains.
+- Provider endpoints are limited to the allowlisted Gemini, OpenAI, and XOR Gateway domains.
+- The XOR Gateway credential is obfuscated for the public demo only and is not production-grade secret storage.
 - Temporary build artifacts and local runtime files are excluded by `.gitignore`.
 - Test keys are not written into source, trace exports, or deployment artifacts.
 
