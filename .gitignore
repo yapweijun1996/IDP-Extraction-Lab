@@ -7,6 +7,7 @@ coverage/
 .idea/
 tmp-desktop.png
 tmp-mobile.png
+tmp-*.png
 vite-*.err.log
 vite-*.out.log
 npm-debug.log*
