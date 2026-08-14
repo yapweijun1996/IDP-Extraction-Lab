@@ -1,4 +1,4 @@
-import { registerSW } from 'virtual:pwa-register';
+﻿import { registerSW } from 'virtual:pwa-register';
 import { validateContract, sanitizeProviderConfig } from '../providers/contract.mjs';
 import { BrowserDocumentRenderer } from '../ui/pdf-renderer.mjs';
 import { AgentRuntimeClient } from '../runtime/runtime-client.mjs';
@@ -76,7 +76,7 @@ import '../ui/g3tooltip.js';
   let documentGeneration = 0;
   let pageRequestSequence = 0;
   let vault = null;
-  let providerConfig = { provider: 'gemini', model: 'gemini-3.5-flash-lite', reasoning: 'medium' };
+  let providerConfig = { provider: 'xorgateway', model: 'gpt-5.4-mini', reasoning: 'medium' };
   let runtime = null;
   let storageWarning = '';
   let runArtifacts = [];
@@ -158,7 +158,7 @@ import '../ui/g3tooltip.js';
     providerLabels.forEach(([selector, key]) => setFirstText(document.querySelector(selector), t(key)));
     const providerActions = [['#providerDrawer .provider-modal-content > h3', 'provider.localData'], ['#refreshHistory', 'provider.refreshHistory'], ['#clearLocalData', 'provider.clearData'], ['#saveProvider', 'provider.save'], ['#testProvider', 'provider.test'], ['#deleteProvider', 'provider.delete']];
     providerActions.forEach(([selector, key]) => { const element = document.querySelector(selector); if (element) element.textContent = t(key); });
-    const providerSelectOptions = [['#providerSelect option[value="gemini"]', 'provider.gemini'], ['#providerSelect option[value="openai"]', 'provider.openai']];
+    const providerSelectOptions = [['#providerSelect option[value="xorgateway"]', 'provider.xorgateway']];
     providerSelectOptions.forEach(([selector, key]) => { const element = document.querySelector(selector); if (element) element.textContent = t(key); });
     const closeProvider = document.querySelector('#closeProvider'); if (closeProvider) { closeProvider.setAttribute('aria-label', t('accessibility.closeProvider')); closeProvider.title = t('accessibility.closeProvider'); }
     const keyInput = document.querySelector('#providerKey'); if (keyInput) keyInput.placeholder = t('provider.keyPlaceholder');
@@ -474,11 +474,11 @@ import '../ui/g3tooltip.js';
 
   function statusTooltip(status) {
     return ({
-      Verified: `${t('status.verified')} — ${t('status.verified')}`,
-      'Needs Review': `${t('status.needsReview')} — ${t('issues.help')}`,
-      Reinspected: `${t('status.reinspected')} — ${t('issues.localized')}`,
-      Missing: `${t('status.missing')} — ${t('status.missing')}`,
-      'Not Requested': `${t('status.notRequested')} — ${t('status.notRequested')}`
+      Verified: `${t('status.verified')} â€” ${t('status.verified')}`,
+      'Needs Review': `${t('status.needsReview')} â€” ${t('issues.help')}`,
+      Reinspected: `${t('status.reinspected')} â€” ${t('issues.localized')}`,
+      Missing: `${t('status.missing')} â€” ${t('status.missing')}`,
+      'Not Requested': `${t('status.notRequested')} â€” ${t('status.notRequested')}`
     })[status] || status;
   }
 
@@ -532,7 +532,7 @@ import '../ui/g3tooltip.js';
     return 'Verified';
   }
 
-  function displayValue(value) { return value === null || value === undefined || value === '' ? '—' : String(value); }
+  function displayValue(value) { return value === null || value === undefined || value === '' ? 'â€”' : String(value); }
 
   function renderLineItems() {
     const rows = filteredRows();
@@ -542,7 +542,7 @@ import '../ui/g3tooltip.js';
     const pageRows = rows.slice(start, start + 10);
     els.lineItemHeaders.innerHTML = `${groups.line.map((field) => `<th>${escapeHtml(fieldLabel(field))}</th>`).join('')}<th>${escapeHtml(t('result.status'))}</th>`;
     els.lineItemRows.innerHTML = pageRows.map((row) => `<tr data-row="${row.__index}" class="${selectedRow?.__index === row.__index ? 'selected' : ''}" tabindex="0">${groups.line.map((field) => `<td title="${escapeHtml(displayValue(row[field.key]))}">${escapeHtml(displayValue(row[field.key]))}</td>`).join('')}<td>${statusMarkup(rowStatus(row))}</td></tr>`).join('');
-    els.mobileLineItems.innerHTML = pageRows.map((row) => `<button type="button" class="mobile-line-row ${selectedRow?.__index === row.__index ? 'selected' : ''}" data-row="${row.__index}"><span class="mobile-line-top"><b>${escapeHtml(displayValue(row.sn ?? t('viewer.row', { row: row.__index + 1 })))}${row.stock_code ? ` · ${escapeHtml(row.stock_code)}` : ''}</b>${statusMarkup(rowStatus(row))}</span><span>${escapeHtml(displayValue(row.description ?? Object.values(row).find((value) => typeof value === 'string')))}</span><span class="mobile-line-values">${groups.line.filter((field) => !['sn', 'stock_code', 'description'].includes(field.key)).slice(0, 3).map((field) => `<span>${escapeHtml(fieldLabel(field))}<strong>${escapeHtml(displayValue(row[field.key]))}</strong></span>`).join('')}</span></button>`).join('');
+    els.mobileLineItems.innerHTML = pageRows.map((row) => `<button type="button" class="mobile-line-row ${selectedRow?.__index === row.__index ? 'selected' : ''}" data-row="${row.__index}"><span class="mobile-line-top"><b>${escapeHtml(displayValue(row.sn ?? t('viewer.row', { row: row.__index + 1 })))}${row.stock_code ? ` Â· ${escapeHtml(row.stock_code)}` : ''}</b>${statusMarkup(rowStatus(row))}</span><span>${escapeHtml(displayValue(row.description ?? Object.values(row).find((value) => typeof value === 'string')))}</span><span class="mobile-line-values">${groups.line.filter((field) => !['sn', 'stock_code', 'description'].includes(field.key)).slice(0, 3).map((field) => `<span>${escapeHtml(fieldLabel(field))}<strong>${escapeHtml(displayValue(row[field.key]))}</strong></span>`).join('')}</span></button>`).join('');
     els.paginationSummary.textContent = rows.length ? t('result.showingRows', { from: start + 1, to: Math.min(start + 10, rows.length), count: rows.length }) : t('result.noRows');
     els.linePage.textContent = `${currentLinePage} / ${resultPageCount}`;
     $('prevRows').disabled = currentLinePage <= 1;
@@ -600,8 +600,9 @@ import '../ui/g3tooltip.js';
     try {
       if (!vault) vault = await openVault();
       providerConfig = readProviderForm();
-      const apiKey = await vault.get('provider_credentials', providerConfig.provider);
-      if (!apiKey?.key) { openProvider(); throw new Error(t('error.providerKey', { provider: providerConfig.provider === 'openai' ? 'OpenAI' : 'Gemini' })); }
+      const savedKey = await vault.get('provider_credentials', providerConfig.provider);
+      const usesRuntimeKey = providerRequiresUserKey(providerConfig.provider) && !savedKey?.key;
+      if (usesRuntimeKey) { openProvider(); throw new Error(t('error.providerKey', { provider: providerDisplayLabel(providerConfig.provider) })); }
       const contract = validateContract(buildExtractionContract());
       const file = await selectedOrSampleFile();
       const metadata = await loadDocument(file);
@@ -612,7 +613,7 @@ import '../ui/g3tooltip.js';
       try { const health = await storageHealth(); if (!health.available || health.usage + file.size > health.allowed) throw new Error(t('error.storageLimit')); await vault.set('documents', documentHash, { name: file.name, type: file.type, bytes: documentBuffer }, { createdAt: new Date().toISOString() }); } catch (error) { storageWarning = t('error.sourceSave'); showToast(storageWarning); }
       runArtifacts = [];
       runtime = new AgentRuntimeClient(renderer, handleRuntimeEvent, (artifact) => runArtifacts.push(artifact));
-      const result = await runtime.run({ runId: activeRunId, fileName: file.name, documentHash, pageCount: metadata.pageCount, contract, config: providerConfig, apiKey: apiKey.key });
+      const result = await runtime.run({ runId: activeRunId, fileName: file.name, documentHash, pageCount: metadata.pageCount, contract, config: providerConfig, apiKey: savedKey?.key || null });
       runtime.stop();
       const status = { elapsed_ms: result.usage?.elapsed_ms || 0 };
       applyResult(result, status);
@@ -635,7 +636,7 @@ import '../ui/g3tooltip.js';
     agentEvents.push(safe); agentEvents = agentEvents.slice(-2000);
     const phase = phaseLabel(safe.phase); els.processingTitle.textContent = phase; els.progressText.textContent = safe.step ? stepLabel(safe.step) : phase; els.fileStatus.textContent = phase; els.fileStatus.className = 'status-pill processing';
     const percent = safe.phase === 'preparing' ? 5 : safe.phase === 'extracting' ? 12 + Math.round((Number(safe.page || 0) / Math.max(1, pageCount)) * 55) : safe.phase === 'validating' ? 72 : safe.phase === 'reinspecting' ? 84 : safe.phase === 'finalizing' ? 96 : 8;
-    els.progressBar.style.width = `${percent}%`; els.processingDetail.textContent = safe.message || t('processing.workerEvent', { seq: safe.seq, step: stepLabel(safe.step), page: safe.page ? ` · ${t('viewer.page', { page: safe.page, total: pageCount })}` : '' });
+    els.progressBar.style.width = `${percent}%`; els.processingDetail.textContent = safe.message || t('processing.workerEvent', { seq: safe.seq, step: stepLabel(safe.step), page: safe.page ? ` Â· ${t('viewer.page', { page: safe.page, total: pageCount })}` : '' });
     renderIssuesAndTrace();
   }
 
@@ -651,8 +652,8 @@ import '../ui/g3tooltip.js';
   function safeErrorSummary(error) {
     return String(error?.message || error || 'Unknown extraction error')
       .replace(/data:[^\s,]+;base64,[A-Za-z0-9+/=]+/gi, '[image data redacted]')
-      .replace(/AIza[A-Za-z0-9_-]{20,}/g, 'AIza…[redacted]')
-      .replace(/(sk-[A-Za-z0-9_-]{8})[A-Za-z0-9_-]+/g, '$1…[redacted]')
+      .replace(/AIza[A-Za-z0-9_-]{20,}/g, 'AIzaâ€¦[redacted]')
+      .replace(/(sk-[A-Za-z0-9_-]{8})[A-Za-z0-9_-]+/g, '$1â€¦[redacted]')
       .replace(/[\r\n\t]+/g, ' ')
       .slice(0, 300);
   }
@@ -664,8 +665,8 @@ import '../ui/g3tooltip.js';
     els.processingState.hidden = true; els.completedResult.hidden = true; els.emptyState.hidden = true; els.errorState.hidden = false; els.compactSummary.hidden = !activeRunId;
     els.runButton.disabled = !navigator.onLine; els.emptyRunButton.disabled = !navigator.onLine; els.exportButton.disabled = false;
     els.errorMessage.textContent = failure.error?.message || t('error.generic');
-    const failedAt = failedEvent ? t('dynamic.failedAt', { step: failedEvent.step || failedEvent.phase, page: failedEvent.page ? ` · ${t('dynamic.pageOnly', { page: failedEvent.page })}` : '' }) + ' ' : '';
-    els.errorStep.textContent = lastComplete ? `${failedAt}${t('dynamic.lastCompleted', { step: lastComplete.step || lastComplete.phase, page: lastComplete.page ? ` · ${t('dynamic.pageOnly', { page: lastComplete.page })}` : '' })}` : `${failedAt}${t('dynamic.noStep')}`;
+    const failedAt = failedEvent ? t('dynamic.failedAt', { step: failedEvent.step || failedEvent.phase, page: failedEvent.page ? ` Â· ${t('dynamic.pageOnly', { page: failedEvent.page })}` : '' }) + ' ' : '';
+    els.errorStep.textContent = lastComplete ? `${failedAt}${t('dynamic.lastCompleted', { step: lastComplete.step || lastComplete.phase, page: lastComplete.page ? ` Â· ${t('dynamic.pageOnly', { page: lastComplete.page })}` : '' })}` : `${failedAt}${t('dynamic.noStep')}`;
     els.fileStatus.textContent = t('status.failed'); els.fileStatus.className = 'status-pill review g3-title';
     els.fileStatus.setAttribute('title', failure.error?.message || t('error.title'));
     els.fileStatus.setAttribute('data-g3tooltip', failure.error?.message || t('error.title'));
@@ -733,9 +734,9 @@ import '../ui/g3tooltip.js';
       if (related.some((event) => ['region_localization', 'forced_localization', 'provenance_commit'].includes(event.step) && ['error', 'warning'].includes(event.status))) return { text: t('issues.localizationFailed'), kind: 'failed' };
       return { text: t('issues.notLocalized'), kind: 'unlocated' };
     };
-    els.issueList.innerHTML = issues.length ? issues.slice(0, 100).map((issue, index) => { const location = localization(issue); return `<button type="button" data-issue-index="${index}"><span><b>${escapeHtml(issue.code)}${issue.page ? ` · ${t('dynamic.pageOnly', { page: issue.page })}` : ''}${issue.row ? ` · ${t('viewer.row', { row: issue.row })}` : ''}</b><small>${escapeHtml(issue.message || issue.path || '')}</small><small class="localization-label ${location.kind}">${escapeHtml(location.text)}</small></span><em class="${issue.severity === 'high' ? 'review' : 'reinspected'}">${escapeHtml(issue.severity || 'info')}</em></button>`; }).join('') : `<p class="drawer-empty">${escapeHtml(t('dynamic.noIssues'))}</p>`;
+    els.issueList.innerHTML = issues.length ? issues.slice(0, 100).map((issue, index) => { const location = localization(issue); return `<button type="button" data-issue-index="${index}"><span><b>${escapeHtml(issue.code)}${issue.page ? ` Â· ${t('dynamic.pageOnly', { page: issue.page })}` : ''}${issue.row ? ` Â· ${t('viewer.row', { row: issue.row })}` : ''}</b><small>${escapeHtml(issue.message || issue.path || '')}</small><small class="localization-label ${location.kind}">${escapeHtml(location.text)}</small></span><em class="${issue.severity === 'high' ? 'review' : 'reinspected'}">${escapeHtml(issue.severity || 'info')}</em></button>`; }).join('') : `<p class="drawer-empty">${escapeHtml(t('dynamic.noIssues'))}</p>`;
     els.traceList.innerHTML = agentEvents.length ? agentEvents.slice().reverse().map((event) => {
-      const details = [event.message, event.page ? t('dynamic.pageOnly', { page: event.page }) : '', event.target_ids?.length ? `${t('trace.targets')}: ${event.target_ids.join(', ')}` : '', event.bbox ? `bbox ${JSON.stringify(event.bbox)}` : '', traceMetricsLabel(event)].filter(Boolean).join(' · ');
+      const details = [event.message, event.page ? t('dynamic.pageOnly', { page: event.page }) : '', event.target_ids?.length ? `${t('trace.targets')}: ${event.target_ids.join(', ')}` : '', event.bbox ? `bbox ${JSON.stringify(event.bbox)}` : '', traceMetricsLabel(event)].filter(Boolean).join(' Â· ');
       return `<li class="trace-${escapeHtml(event.status || 'info')}"><span>${escapeHtml(stepLabel(event.step || event.phase))}</span><em>${escapeHtml(event.status || 'info')}</em><small>${escapeHtml(details)}</small><time>${escapeHtml(new Date(event.at).toLocaleTimeString(locale))}</time></li>`;
     }).join('') : `<li class="drawer-empty">${escapeHtml(t('dynamic.noEvents'))}</li>`;
     if (els.downloadTrace) els.downloadTrace.disabled = agentEvents.length === 0;
@@ -817,36 +818,93 @@ import '../ui/g3tooltip.js';
     return sanitizeProviderConfig({ provider: $('providerSelect').value, model: $('providerModel').value, reasoning: $('providerReasoning').value });
   }
 
+  function providerRequiresUserKey(provider) { return provider !== 'xorgateway'; }
+
+  function providerDisplayLabel(provider) {
+    return t(
+      provider === 'openai' ? 'provider.openai' : provider === 'xorgateway' ? 'provider.xorgateway' : 'provider.gemini'
+    );
+  }
+
   function providerDefaults(provider) {
-    return provider === 'openai' ? { provider: 'openai', model: 'gpt-5-mini', reasoning: 'medium' } : { provider: 'gemini', model: 'gemini-3.5-flash-lite', reasoning: 'medium' };
+    return provider === 'openai' ? { provider: 'openai', model: 'gpt-5-mini', reasoning: 'medium' }
+      : provider === 'xorgateway' ? { provider: 'xorgateway', model: 'gpt-5.4-mini', reasoning: 'medium' }
+      : { provider: 'gemini', model: 'gemini-3.5-flash-lite', reasoning: 'medium' };
   }
 
   async function updateCredentialStatus() {
     if (!vault) return;
     const config = readProviderForm();
     const saved = await vault.get('provider_credentials', config.provider).catch(() => null);
-    $('credentialStatus').dataset.runtimeText = 'true'; $('credentialStatus').textContent = saved?.key ? t('provider.saved', { provider: config.provider === 'openai' ? 'OpenAI' : 'Gemini' }) : t('provider.noKey');
-    $('deleteProvider').disabled = !saved?.key;
-    providerConfig = config; $('providerMeta').textContent = `${config.provider === 'openai' ? 'OpenAI' : 'Gemini'} · ${config.model}`;
+    const providerLabel = providerDisplayLabel(config.provider);
+    const usesUserKey = providerRequiresUserKey(config.provider);
+    const keyInput = $('providerKey');
+    const deleteButton = $('deleteProvider');
+    const status = usesUserKey
+      ? (saved?.key ? t('provider.saved', { provider: providerLabel }) : t('provider.noKey'))
+      : t('provider.gatewayNoUserKey');
+
+    $('credentialStatus').dataset.runtimeText = 'true';
+    $('credentialStatus').textContent = status;
+    if (keyInput) {
+      keyInput.placeholder = usesUserKey ? t('provider.keyPlaceholder') : t('provider.keyPlaceholderGateway');
+      keyInput.disabled = !usesUserKey;
+      if (!usesUserKey) keyInput.value = '';
+    }
+    if (deleteButton) deleteButton.disabled = !usesUserKey || !saved?.key;
+    providerConfig = config;
+    $('providerMeta').textContent = `${providerLabel} Â· ${config.model}`;
   }
 
   async function saveProvider() {
     const config = readProviderForm(), key = $('providerKey').value.trim();
+    if (!providerRequiresUserKey(config.provider)) {
+      providerConfig = config;
+      localStorage.setItem('idp-lab-provider', JSON.stringify(config));
+      await updateCredentialStatus();
+      showToast(t('toast.savedGateway'));
+      return;
+    }
     if (!key) throw new Error(t('error.saveKey'));
     await vault.set('provider_credentials', config.provider, { key, savedAt: new Date().toISOString() }, { provider: config.provider, createdAt: new Date().toISOString() });
-    $('providerKey').value = ''; providerConfig = config; localStorage.setItem('idp-lab-provider', JSON.stringify(config)); await updateCredentialStatus(); showToast(t('toast.savedKey'));
+    $('providerKey').value = '';
+    providerConfig = config;
+    localStorage.setItem('idp-lab-provider', JSON.stringify(config));
+    await updateCredentialStatus();
+    showToast(t('toast.savedKey'));
   }
 
   async function deleteProviderKey() {
-    const config = readProviderForm(); await vault.remove('provider_credentials', config.provider); $('providerKey').value = ''; await updateCredentialStatus(); showToast(t('toast.deletedKey'));
+    const config = readProviderForm();
+    if (!providerRequiresUserKey(config.provider)) {
+      providerConfig = config;
+      localStorage.setItem('idp-lab-provider', JSON.stringify(config));
+      await updateCredentialStatus();
+      showToast(t('provider.noUserKey'));
+      return;
+    }
+    await vault.remove('provider_credentials', config.provider);
+    $('providerKey').value = '';
+    await updateCredentialStatus();
+    showToast(t('toast.deletedKey'));
   }
 
   async function testProviderConnection() {
     if (!navigator.onLine) throw new Error(t('error.providerTestOffline'));
-    const config = readProviderForm(), saved = await vault.get('provider_credentials', config.provider); if (!saved?.key) throw new Error(t('error.noSavedKey'));
+    const config = readProviderForm();
+    const saved = providerRequiresUserKey(config.provider) ? await vault.get('provider_credentials', config.provider) : null;
+    if (providerRequiresUserKey(config.provider) && !saved?.key) throw new Error(t('error.noSavedKey'));
     if (!window.confirm(t('provider.connectionCost'))) return;
+
     $('testProvider').disabled = true;
-    try { runtime = new AgentRuntimeClient(renderer); const result = await runtime.testProvider({ config, apiKey: saved.key }); showToast(t('toast.connection', { ms: result.latencyMs || 0 })); } finally { runtime?.stop(); $('testProvider').disabled = false; }
+    try {
+      runtime = new AgentRuntimeClient(renderer);
+      const result = await runtime.testProvider({ config, apiKey: saved?.key || null });
+      showToast(t('toast.connection', { ms: result.latencyMs || 0 }));
+    } finally {
+      runtime?.stop();
+      $('testProvider').disabled = false;
+    }
   }
 
   function openProvider() { previousFocus = document.activeElement; $('providerDrawer').hidden = false; document.body.style.overflow = 'hidden'; document.querySelector('#providerDrawer .provider-modal').focus(); updateCredentialStatus(); refreshHistory(); }
@@ -855,7 +913,7 @@ import '../ui/g3tooltip.js';
   async function refreshHistory() {
     if (!vault) return;
     const runs = await vault.list('runs');
-    $('runHistory').innerHTML = runs.length ? runs.map((run) => `<div class="history-row"><button type="button" data-open-run="${escapeHtml(run.id)}"><strong>${escapeHtml(run.provider || 'provider')} · ${escapeHtml(run.status || 'saved')}</strong><small>${escapeHtml(new Date(run.createdAt || run.updatedAt).toLocaleString(locale))}</small></button><button class="mini-action" type="button" data-delete-run="${escapeHtml(run.id)}" aria-label="${escapeHtml(t('accessibility.deleteRun'))}">${iconMarkup('trash')}</button></div>`).join('') : `<p class="drawer-empty">${escapeHtml(t('dynamic.historyEmpty'))}</p>`;
+    $('runHistory').innerHTML = runs.length ? runs.map((run) => `<div class="history-row"><button type="button" data-open-run="${escapeHtml(run.id)}"><strong>${escapeHtml(run.provider || 'provider')} Â· ${escapeHtml(run.status || 'saved')}</strong><small>${escapeHtml(new Date(run.createdAt || run.updatedAt).toLocaleString(locale))}</small></button><button class="mini-action" type="button" data-delete-run="${escapeHtml(run.id)}" aria-label="${escapeHtml(t('accessibility.deleteRun'))}">${iconMarkup('trash')}</button></div>`).join('') : `<p class="drawer-empty">${escapeHtml(t('dynamic.historyEmpty'))}</p>`;
   }
 
   async function openSavedRun(runId) {
@@ -876,7 +934,7 @@ import '../ui/g3tooltip.js';
 
   async function updateStorageStatus() {
     const health = await storageHealth().catch(() => null);
-    const storageText = health ? `${health.persisted ? t('storage.persistent') : t('storage.bestEffort')} · ${t('storage.used', { mb: Math.round(health.usage / 1024 / 1024) })} · ${t('storage.cap', { mb: Math.round(health.allowed / 1024 / 1024) })}` : t('storage.unavailable');
+    const storageText = health ? `${health.persisted ? t('storage.persistent') : t('storage.bestEffort')} Â· ${t('storage.used', { mb: Math.round(health.usage / 1024 / 1024) })} Â· ${t('storage.cap', { mb: Math.round(health.allowed / 1024 / 1024) })}` : t('storage.unavailable');
     $('storageStatus').dataset.runtimeText = 'true'; $('storageStatus').textContent = storageText;
   }
 
@@ -1287,10 +1345,11 @@ import '../ui/g3tooltip.js';
 
   async function initialize() {
     installLanguageDom(); renderFieldGroups(); renderDocumentFields(); renderLineItems(); updateJson(); updateNetworkState(); installLayoutDom(); installListeners(); initializePwa();
-    const savedConfig = JSON.parse(localStorage.getItem('idp-lab-provider') || 'null') || providerDefaults('gemini');
+    const savedConfig = JSON.parse(localStorage.getItem('idp-lab-provider') || 'null') || providerDefaults('xorgateway');
     providerConfig = sanitizeProviderConfig(savedConfig); $('providerSelect').value = providerConfig.provider; $('providerModel').value = providerConfig.model; $('providerReasoning').value = providerConfig.reasoning;
     vault = await openVault(); await updateCredentialStatus(); await updateStorageStatus(); await refreshHistory();
     try { const file = await selectedOrSampleFile(); await loadDocument(file); } catch (error) { showRunError(error); }
   }
   initialize().catch((error) => showRunError(error));
 })();
+

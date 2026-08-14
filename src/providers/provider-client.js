@@ -3,6 +3,41 @@
 
   const GEMINI_HOST = "generativelanguage.googleapis.com";
   const OPENAI_HOST = "api.openai.com";
+  const GPT_GATEWAY_HOST = "gpt.yapweijun1996.com";
+  const GPT_GATEWAY_PROVIDER = "xorgateway";
+  const GPT_GATEWAY_XOR_KEY = "20260515";
+  const GPT_GATEWAY_KEY_CIPHER = "VUdtAwIBV1QDAlQPAVYGAVEAU1cCBFUCAVZQV1ECUwwFUQABUQJVVwFSB1cGVwIGBQAK";
+
+  let resolvedGatewayKey = null;
+
+  function xorCipher(base64Text, key) {
+    try {
+      const raw = atob(String(base64Text || ""));
+      const password = String(key || "");
+      if (!raw || !password) return "";
+      let result = "";
+      for (let i = 0; i < raw.length; i++) {
+        result += String.fromCharCode(raw.charCodeAt(i) ^ password.charCodeAt(i % password.length));
+      }
+      return result;
+    } catch {
+      return "";
+    }
+  }
+
+  function gatewayApiKey(inputApiKey) {
+    if (String(inputApiKey || "").trim()) return inputApiKey.trim();
+    if (resolvedGatewayKey === null) resolvedGatewayKey = xorCipher(GPT_GATEWAY_KEY_CIPHER, GPT_GATEWAY_XOR_KEY).trim();
+    return resolvedGatewayKey;
+  }
+
+  function requireGatewayApiKey(apiKey) {
+    if (!apiKey) {
+      const error = new Error("Gateway API key not configured");
+      error.idpCode = "provider_error";
+      throw error;
+    }
+  }
 
   function imagePayload(image) {
     const dataUrl = String(image?.dataUrl || "");
@@ -100,6 +135,30 @@
       .trim();
   }
 
+  async function requestGatewayOpenAIStyle(request, fetchImpl) {
+    const started = Date.now();
+    const content = [{ type: "input_text", text: request.prompt }, ...(request.images || []).map((image) => ({
+      type: "input_image",
+      image_url: imagePayload(image).dataUrl,
+      detail: "high"
+    }))];
+    const body = {
+      model: request.model,
+      input: [{ role: "user", content }],
+      ...(request.reasoning ? { reasoning: { effort: request.reasoning } } : {}),
+      ...(request.schema ? { text: { format: { type: "json_schema", name: "idp_response", strict: true, schema: request.schema } } } : {})
+    };
+    const payload = await withTimeout(request.timeoutMs, async (signal) => parseResponse(await fetchImpl(`https://${GPT_GATEWAY_HOST}/v1/responses`, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${request.apiKey}` },
+      body: JSON.stringify(body),
+      signal
+    }), "XOR Gateway"));
+    const text = openAIText(payload);
+    if (!text) throw safeProviderError("XOR Gateway", 200, { status: payload?.status || "empty_response" });
+    return { text, usage: openAIUsage(payload), durationMs: Date.now() - started, finishReason: payload.status || null };
+  }
+
   async function requestOpenAI(request, fetchImpl) {
     const started = Date.now();
     const content = [{ type: "input_text", text: request.prompt }, ...(request.images || []).map((image) => ({
@@ -127,7 +186,7 @@
   async function request(input, fetchImpl) {
     const config = input?.config || {};
     const normalized = {
-      apiKey: input.apiKey,
+      apiKey: config.provider === GPT_GATEWAY_PROVIDER ? gatewayApiKey(input?.apiKey) : input.apiKey,
       model: config.model,
       prompt: String(input.prompt || ""),
       images: input.images || [],
@@ -136,10 +195,12 @@
       temperature: config.provider === "gemini" ? 0 : undefined,
       timeoutMs: input.timeoutMs || 120000
     };
+    if (config.provider === GPT_GATEWAY_PROVIDER) requireGatewayApiKey(normalized.apiKey);
     if (config.provider === "gemini") return requestGemini(normalized, fetchImpl);
     if (config.provider === "openai") return requestOpenAI(normalized, fetchImpl);
+    if (config.provider === GPT_GATEWAY_PROVIDER) return requestGatewayOpenAIStyle(normalized, fetchImpl);
     throw new Error("Unsupported provider");
   }
 
-  root.IdpProviderClient = Object.freeze({ imagePayload, request, requestGemini, requestOpenAI });
+  root.IdpProviderClient = Object.freeze({ imagePayload, request, requestGemini, requestOpenAI, requestGatewayOpenAIStyle, gatewayApiKey });
 })(typeof self !== "undefined" ? self : globalThis);

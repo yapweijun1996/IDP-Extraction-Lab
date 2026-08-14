@@ -246,7 +246,7 @@ function rereadSchema() {
 }
 
 function allowedFetch(provider) {
-  const expected = provider === "openai" ? "api.openai.com" : "generativelanguage.googleapis.com";
+  const expected = provider === "gemini" ? "generativelanguage.googleapis.com" : provider === "xorgateway" ? "gpt.yapweijun1996.com" : "api.openai.com";
   return async (url, init) => {
     const parsed = new URL(String(url));
     if (parsed.protocol !== "https:" || parsed.hostname !== expected) throw new Error("Provider endpoint rejected by allowlist");
@@ -478,7 +478,7 @@ async function decideInspections(run, page, pageImage, issues, attempts) {
       }
     };
   }));
-  const skill = run.config.provider === "openai" ? Agrun.openaiBrowserSkill : Agrun.geminiBrowserSkill;
+  const skill = run.config.provider === "openai" || run.config.provider === "xorgateway" ? Agrun.openaiBrowserSkill : Agrun.geminiBrowserSkill;
   const runtime = Agrun.createRuntime({
     skills: [skill],
     customActions: [action],
@@ -507,8 +507,8 @@ async function decideInspections(run, page, pageImage, issues, attempts) {
       prompt: decisionPrompt(page.page_number, targets, page, run.contract),
       parts: [{ type: "image", url: pageImage.dataUrl, mimeType: "image/jpeg", bytes: pageImage.bytes }],
       fetch: allowedFetch(run.config.provider),
-      apiVariant: run.config.provider === "openai" ? "responses" : undefined,
-      reasoningEffort: run.config.provider === "openai" ? "minimal" : undefined,
+      apiVariant: run.config.provider === "openai" || run.config.provider === "xorgateway" ? "responses" : undefined,
+      reasoningEffort: run.config.provider === "openai" || run.config.provider === "xorgateway" ? "minimal" : undefined,
       thinkingLevel: run.config.provider === "gemini" ? "minimal" : undefined
     });
     if (decisionResult?.error) {

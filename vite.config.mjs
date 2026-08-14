@@ -92,7 +92,7 @@ export default defineConfig({
         navigateFallback: "index.html",
         runtimeCaching: [
           {
-            urlPattern: ({ url }) => url.origin === "https://api.openai.com" || url.origin === "https://generativelanguage.googleapis.com",
+            urlPattern: ({ url }) => url.origin === "https://api.openai.com" || url.origin === "https://generativelanguage.googleapis.com" || url.origin === "https://gpt.yapweijun1996.com",
             handler: "NetworkOnly",
             method: "POST"
           }

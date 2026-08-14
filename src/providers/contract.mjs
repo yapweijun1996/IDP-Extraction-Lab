@@ -57,10 +57,10 @@ export function pageResponseSchema(contract) {
 }
 
 export function sanitizeProviderConfig(config) {
-  const provider = config?.provider === "openai" ? "openai" : "gemini";
+  const provider = config?.provider === "openai" ? "openai" : config?.provider === "xorgateway" ? "xorgateway" : "gemini";
   const model = String(config?.model || "").trim();
   if (!model || model.length > 120 || !/^[a-zA-Z0-9._:-]+$/.test(model)) throw new Error("Enter a valid provider model name");
   const allowedReasoning = new Set(["minimal", "low", "medium", "high"]);
   const reasoning = allowedReasoning.has(config?.reasoning) ? config.reasoning : "medium";
-  return { provider, model, reasoning, temperature: provider === "gemini" ? 0 : undefined, apiVariant: provider === "openai" ? "responses" : undefined };
+  return { provider, model, reasoning, temperature: provider === "gemini" ? 0 : undefined, apiVariant: provider === "openai" || provider === "xorgateway" ? "responses" : undefined };
 }
