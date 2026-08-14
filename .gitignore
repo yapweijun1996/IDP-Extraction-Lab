@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.vite/
+coverage/
+*.log
+.vscode/
+.idea/
+tmp-desktop.png
+tmp-mobile.png
+vite-*.err.log
+vite-*.out.log
+npm-debug.log*
